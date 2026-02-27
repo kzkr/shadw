@@ -28,6 +28,8 @@ enum Commands {
     },
     /// Stop watching for changes
     Stop,
+    /// Restart the daemon
+    Restart,
     /// Select or list available models
     Use {
         /// Model name (omit to list available models)
@@ -49,6 +51,7 @@ fn main() {
         Commands::Init => cli::init::exec(),
         Commands::Start { foreground } => cli::start::exec(foreground),
         Commands::Stop => cli::stop::exec(),
+        Commands::Restart => cli::restart::exec(),
         Commands::Use { model } => cli::use_model::exec(model.as_deref()),
         Commands::Status => cli::status::exec(),
         Commands::Retry { hash } => cli::retry::exec(&hash),
