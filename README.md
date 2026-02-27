@@ -89,10 +89,6 @@ Developer + AI conversation
   PR comment: Decision Trail
 ```
 
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
 ## License
 
 [MIT](LICENSE)
