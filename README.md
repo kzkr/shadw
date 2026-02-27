@@ -2,6 +2,8 @@
 
 **Capture the _why_ behind code changes.**
 
+> **Note:** Shadw is under active development. APIs, CLI flags, and the decision record format may change between releases.
+
 When developers work with AI coding assistants, the most valuable part — the reasoning, the alternatives considered, the tradeoffs debated — disappears the moment the conversation ends. The diff shows _what_ changed. Shadw captures _why_.
 
 ## How it works
@@ -88,6 +90,10 @@ Developer + AI conversation
         ↓
   PR comment: Decision Trail
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
