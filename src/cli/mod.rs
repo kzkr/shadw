@@ -4,4 +4,5 @@ pub mod retry;
 pub mod start;
 pub mod status;
 pub mod stop;
+pub mod upgrade;
 pub mod use_model;
