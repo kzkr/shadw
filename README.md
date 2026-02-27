@@ -73,6 +73,22 @@ shadw init
 - ~12 GB disk space for the default model
 - macOS or Linux (Windows support planned)
 
+## Supported agents
+
+| Agent | Source |
+|-------|--------|
+| [Claude Code](https://claude.ai/code) | JSONL session files |
+
+More agents coming soon (Cursor, Windsurf, Copilot).
+
+## Extraction models
+
+| Model | Params | Size | License |
+|-------|--------|------|---------|
+| `gpt-oss` (default) | 20B MoE | ~12 GB | Apache 2.0 |
+
+Models run locally via llama.cpp. More models coming soon. Use `shadw use` to list or switch models.
+
 ## How decisions reach your PR
 
 ```
