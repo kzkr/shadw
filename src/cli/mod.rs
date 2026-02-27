@@ -1,4 +1,5 @@
 pub mod init;
+pub mod restart;
 pub mod retry;
 pub mod start;
 pub mod status;

@@ -55,16 +55,18 @@ pub async fn run(repo_root: &Path) -> Result<()> {
     )
     .map_err(|e| ShadwError::Other(format!("failed to create fs watcher: {e}")))?;
 
+    let mut watching_claude_dir = false;
     if claude_dir.exists() {
         fs_watcher
             .watch(&claude_dir, RecursiveMode::NonRecursive)
             .map_err(|e| ShadwError::Other(format!("failed to watch conversation dir: {e}")))?;
+        watching_claude_dir = true;
     } else {
         warn!(
             "Claude Code project dir not found: {}",
             claude_dir.display()
         );
-        warn!("conversation watching disabled until dir appears");
+        warn!("will poll until it appears");
     }
 
     if refs_dir.exists() {
@@ -81,6 +83,9 @@ pub async fn run(repo_root: &Path) -> Result<()> {
     };
     info!("daemon ready");
 
+    let mut poll_interval = tokio::time::interval(std::time::Duration::from_secs(5));
+    poll_interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+
     loop {
         tokio::select! {
             Some(event) = rx.recv() => {
@@ -91,6 +96,20 @@ pub async fn run(repo_root: &Path) -> Result<()> {
                     &paths,
                     &extraction_config,
                 );
+            }
+            _ = poll_interval.tick(), if !watching_claude_dir => {
+                if claude_dir.exists() {
+                    match fs_watcher.watch(&claude_dir, RecursiveMode::NonRecursive) {
+                        Ok(()) => {
+                            info!("Claude Code project dir appeared, now watching: {}", claude_dir.display());
+                            conv_watcher.scan().ok();
+                            watching_claude_dir = true;
+                        }
+                        Err(e) => {
+                            warn!("failed to watch conversation dir: {e}");
+                        }
+                    }
+                }
             }
             _ = sigterm.recv() => {
                 info!("received SIGTERM, shutting down");

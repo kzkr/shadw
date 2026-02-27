@@ -177,7 +177,22 @@ fn extract_content_preview(message: &serde_json::Value) -> String {
                     }
                     "tool_use" => {
                         let name = block.get("name").and_then(|n| n.as_str()).unwrap_or("?");
-                        parts.push(format!("[tool: {name}]"));
+                        // Extract file path from tool input so the correlation filter can match
+                        let file_hint = block
+                            .get("input")
+                            .and_then(|input| {
+                                input
+                                    .get("file_path")
+                                    .or_else(|| input.get("path"))
+                                    .or_else(|| input.get("command"))
+                                    .and_then(|v| v.as_str())
+                            })
+                            .unwrap_or("");
+                        if file_hint.is_empty() {
+                            parts.push(format!("[tool: {name}]"));
+                        } else {
+                            parts.push(format!("[tool: {name} {file_hint}]"));
+                        }
                     }
                     "tool_result" => {
                         parts.push("[tool result]".to_string());
