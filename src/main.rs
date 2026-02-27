@@ -42,6 +42,8 @@ enum Commands {
         /// Commit hash (or prefix)
         hash: String,
     },
+    /// Upgrade to the latest release
+    Upgrade,
 }
 
 fn main() {
@@ -55,6 +57,7 @@ fn main() {
         Commands::Use { model } => cli::use_model::exec(model.as_deref()),
         Commands::Status => cli::status::exec(),
         Commands::Retry { hash } => cli::retry::exec(&hash),
+        Commands::Upgrade => cli::upgrade::exec(),
     };
 
     if let Err(e) = result {

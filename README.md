@@ -79,9 +79,11 @@ shadw init
 | `shadw init`         | Initialize Shadw in the current git repo |
 | `shadw start`        | Start the background daemon              |
 | `shadw stop`         | Stop the daemon                          |
+| `shadw restart`      | Restart the daemon                       |
 | `shadw status`       | Show daemon, model, and agent status     |
 | `shadw use [model]`  | List or select the extraction model      |
 | `shadw retry <hash>` | Re-extract decisions for a commit        |
+| `shadw upgrade`      | Upgrade to the latest release            |
 
 ## Requirements
 
