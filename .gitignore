@@ -1,0 +1,5 @@
+/target
+.shadw/state/
+.shadw/contexts/
+.claude/
+.DS_Store

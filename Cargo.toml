@@ -1,0 +1,33 @@
+[package]
+name = "shadw"
+version = "0.1.0"
+edition = "2021"
+description = "Capture the why behind code changes"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+tokio = { version = "1", features = ["full"] }
+nix = { version = "0.29", features = ["signal", "process"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
+thiserror = "2"
+directories = "5"
+notify = "6"
+chrono = { version = "0.4", features = ["serde"] }
+llama-cpp-2 = "0.1"
+hf-hub = "0.4"
+indicatif = "0.17"
+
+[features]
+default = []
+cuda = ["llama-cpp-2/cuda"]
+
+[dev-dependencies]
+assert_cmd = "2"
+predicates = "3"
+tempfile = "3"
+libc = "0.2"

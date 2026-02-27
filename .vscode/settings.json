@@ -1,0 +1,7 @@
+{
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "text": "Use Conventional Commits format: type(scope): description. Types: feat, fix, refactor, docs, test, chore, ci, perf, build. Keep the description lowercase, concise, imperative. Example: feat(daemon): add early return for empty buffer"
+    }
+  ]
+}
