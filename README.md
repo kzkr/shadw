@@ -34,12 +34,29 @@ The shared PropertyCard won because both pages render identical data — only th
 - **Zero configuration** — one command to set up, then it works silently in the background
 - **Fits your workflow** — uses native git features (notes, hooks), no new tools to learn
 
+## Install
+
+```bash
+curl -fsSL https://shadw.dev/install.sh | bash
+```
+
+Prebuilt binaries are available for macOS (Apple Silicon & Intel) and Linux (x86_64).
+
+<details>
+<summary>Build from source</summary>
+
+```bash
+cargo build --release
+# Binary at target/release/shadw
+```
+
+Requires Rust 1.85+ and cmake.
+
+</details>
+
 ## Quick start
 
 ```bash
-# Build from source
-cargo build --release
-
 # Initialize in your project (downloads the model on first run)
 cd your-project
 shadw init
@@ -68,10 +85,9 @@ shadw init
 
 ## Requirements
 
-- Rust 1.85+ (build from source)
+- macOS (Apple Silicon or Intel) or Linux (x86_64)
 - Git
 - ~12 GB disk space for the default model
-- macOS or Linux (Windows support planned)
 
 ## Supported agents
 
