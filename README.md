@@ -1,6 +1,5 @@
 <p align="center">
-  <img width="116" height="200" alt="Image" src="https://github.com/user-attachments/assets/fd700b55-6f5c-4c42-b77d-80cde0fb3f8d" 
-  alt="Shadw — Every code change has a story. Shadw captures it."/>
+  <img height="100" src="https://github.com/user-attachments/assets/fd700b55-6f5c-4c42-b77d-80cde0fb3f8d" alt="Shadw — Every code change has a story. Shadw captures it."/>
 </p>
 
 <h1 align="center">Shadw</h1>
@@ -9,8 +8,6 @@
   <a href="https://github.com/kzkr/shadw/releases"><img src="https://img.shields.io/github/v/release/kzkr/shadw?style=flat-square&color=blue" alt="Release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License"></a>
 </p>
-
----
 
 A git diff shows what changed. Shadw shows why.
 
