@@ -163,7 +163,7 @@ fn parse_entry(value: &serde_json::Value) -> Option<ConversationEntry> {
 fn extract_content_preview(message: &serde_json::Value) -> String {
     if let Some(content) = message.get("content") {
         if let Some(text) = content.as_str() {
-            return truncate(text, 200);
+            return truncate(text, 500);
         }
         if let Some(arr) = content.as_array() {
             let mut parts = Vec::new();
@@ -172,7 +172,7 @@ fn extract_content_preview(message: &serde_json::Value) -> String {
                 match block_type {
                     "text" => {
                         if let Some(text) = block.get("text").and_then(|t| t.as_str()) {
-                            parts.push(truncate(text, 150));
+                            parts.push(truncate(text, 400));
                         }
                     }
                     "tool_use" => {
@@ -195,7 +195,7 @@ fn extract_content_preview(message: &serde_json::Value) -> String {
                         }
                     }
                     "tool_result" => {
-                        parts.push("[tool result]".to_string());
+                        // Dropped: zero signal value, wastes budget
                     }
                     _ => {}
                 }

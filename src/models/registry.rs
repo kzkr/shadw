@@ -7,6 +7,7 @@ pub struct ModelSpec {
     pub size_bytes: u64,
     pub params: &'static str,
     pub license: &'static str,
+    pub n_ctx: u32,
 }
 
 static MODELS: &[ModelSpec] = &[ModelSpec {
@@ -17,6 +18,7 @@ static MODELS: &[ModelSpec] = &[ModelSpec {
     size_bytes: 12_109_568_423,
     params: "20B MoE",
     license: "Apache 2.0",
+    n_ctx: 16384,
 }];
 
 pub fn list_models() -> &'static [ModelSpec] {
