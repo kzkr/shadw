@@ -226,8 +226,10 @@ fn build_prompt(context: &CapturedContext, conversation_budget: usize) -> String
 const MAX_PER_MSG: usize = 800;
 
 /// Format a conversation entry as a prompt line.
+/// Maps "assistant" → "AI" to prevent the model from echoing the word "assistant" in output.
 fn format_entry(entry: &crate::watcher::ConversationEntry) -> String {
-    let role = entry.role.as_deref().unwrap_or(&entry.entry_type);
+    let raw_role = entry.role.as_deref().unwrap_or(&entry.entry_type);
+    let role = if raw_role == "assistant" { "AI" } else { raw_role };
     let preview = truncate(&entry.content_preview, MAX_PER_MSG);
     format!("[{role}]: {preview}\n")
 }
@@ -551,7 +553,17 @@ const SYSTEM_PROMPT: &str = r#"You surface the invisible reasoning behind code c
 
 You are NOT a code reviewer. You do NOT describe what the code does. A reviewer can read the diff. Your job is to tell the story they CAN'T see: what {author} was trying to solve, what alternatives came up in conversation, and why this path won.
 
-IMPORTANT: The developer is ALWAYS called {author}. Never use any other name, even if a different name appears in the conversation or commit data.
+## Voice — READ THIS FIRST
+
+There are exactly two actors in every summary:
+- **{author}** — the developer. Use "{author}" for anything the developer initiated, decided, or asked for.
+- **"we"** — the collaborative work between {author} and the AI tool.
+
+NEVER reference the AI as a separate actor. The conversation log labels AI messages as [AI] — ignore that label. Do NOT write "the AI suggested", "the assistant recommended", "the tool proposed", or any similar phrasing. The word "assistant" must NEVER appear in the output. Instead, use passive voice ("it was suggested", "the option came up") or attribute to "we" ("we considered", "we settled on").
+
+BAD: "The assistant suggested moving the animation into a config block."
+GOOD: "During the rewrite, moving the animation into a Tailwind config block came up as the cleaner approach."
+GOOD: "We moved the custom float animation into a Tailwind config block."
 
 ## Output format
 
@@ -571,16 +583,14 @@ Aim for 5-8 sentences across the paragraphs. Each paragraph should be 2-3 senten
 
 Write like you're a senior engineer explaining a decision to a teammate over coffee — natural, specific, technically grounded. Vary your sentence structure. Do NOT use the same opening pattern for every summary.
 
-Use {author} for what the developer initiated. Use "we" for the collaborative work.
-
 ## Rules
 
-- ALWAYS refer to the developer as {author} — never use any other name, "the developer", "the assistant", "the AI", "the team", or "I". The word "assistant" must NEVER appear in the output.
+- NEVER write "the assistant", "the AI", "the tool", "the model", "the bot", or "I". These words must not appear in the output. Use {author}, "we", or passive voice instead.
 - Write naturally — vary how you start sentences. Do NOT always open with "{author} wanted..." or "We discussed...". Mix it up: lead with the problem, the context, the constraint, or the insight.
 - The title must frame a choice with a visible alternative. If the conversation discussed options, name them.
 - Be technically specific — mention actual library names, API patterns, file structures, config choices when they came up in conversation.
-- DO NOT repeat or rephrase the commit message as the title
-- DO NOT say the same thing in both the title and the summary — they should complement each other
+- DO NOT repeat or rephrase the commit message as the title.
+- DO NOT say the same thing in both the title and the summary — they should complement each other.
 - If the conversation is empty or contains no meaningful developer-AI discussion, return {"decisions": []}. A commit with ZERO conversation entries means the developer made the change without AI assistance — there is NO invisible story to tell. Do NOT invent reasoning or fabricate a narrative from the diff alone. The diff is already visible to reviewers; your job is ONLY to surface what happened in conversation.
 
 Respond with ONLY valid JSON:
