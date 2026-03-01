@@ -54,6 +54,8 @@ cd your-project && shadw init
 
 That's it. Shadw is now watching. `shadw init` downloads the model, installs hooks, and starts the daemon.
 
+Requirements: macOS (Apple Silicon & Intel) or Linux (x86_64).
+
 <details>
 <summary>Build from source</summary>
 
@@ -116,12 +118,6 @@ All inference runs locally via [llama.cpp](https://github.com/ggerganov/llama.cp
 | Cursor                                | Planned   |
 | Windsurf                              | Planned   |
 | Copilot                               | Planned   |
-
-## Requirements
-
-- macOS (Apple Silicon & Intel) or Linux (x86_64)
-- Git
-- ~12 GB disk for the default model
 
 ## Contributing
 
