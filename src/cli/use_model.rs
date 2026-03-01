@@ -20,8 +20,8 @@ fn list() -> Result<()> {
             format!("\x1b[2m{}\x1b[0m", models::registry::human_size(spec.size_bytes))
         };
         println!(
-            "  \x1b[1m{}\x1b[0m  {} · {} [{}]",
-            spec.name, spec.params, spec.license, status
+            "  \x1b[1m{}\x1b[0m  {} · ~{} · {} [{}]",
+            spec.name, spec.params, models::registry::human_size(spec.size_bytes), spec.license, status
         );
         println!("  \x1b[2m{}\x1b[0m", spec.tagline);
     }

@@ -3,6 +3,7 @@ use predicates::prelude::*;
 use std::fs;
 use tempfile::TempDir;
 
+#[allow(deprecated)]
 fn shadw() -> Command {
     Command::cargo_bin("shadw").unwrap()
 }
@@ -176,7 +177,9 @@ fn start_foreground_starts_and_stops() {
         .success();
 
     // Start in foreground, then kill it after a brief moment
-    let mut child = std::process::Command::new(assert_cmd::cargo::cargo_bin("shadw"))
+    #[allow(deprecated)]
+    let bin = assert_cmd::cargo::cargo_bin("shadw");
+    let mut child = std::process::Command::new(bin)
         .args(["start", "--foreground"])
         .current_dir(dir.path())
         .stdout(std::process::Stdio::piped())
