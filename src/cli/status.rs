@@ -11,6 +11,8 @@ pub fn exec() -> Result<()> {
         return Err(ShadwError::NotInitialized);
     }
 
+    println!("Shadw v{}", env!("CARGO_PKG_VERSION"));
+
     // Watcher status
     match process::check_running(&repo_root)? {
         Some(_) => println!("Watcher: \x1b[32mrunning\x1b[0m"),
