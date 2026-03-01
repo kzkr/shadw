@@ -1,54 +1,45 @@
-# Contributing to Shadw
+# Contributing
 
-Thanks for your interest in contributing to Shadw.
+Want to help build Shadw? Here's everything you need to get going.
 
-## License Agreement
-
-Shadw is licensed under [MIT](LICENSE). By submitting a pull request, you agree that your contributions will be licensed under the same terms.
-
-## Getting Started
+## 🛠️ Setup
 
 ```bash
-# Build
-cargo build
-
-# Run tests
-cargo test
-
-# Lint (must pass with zero warnings)
-cargo clippy
-
-# Run a single test
-cargo test <test_name>
-
-# Debug the daemon locally
-RUST_LOG=shadw=debug cargo run -- start --foreground
+cargo build                                        # build
+cargo test                                         # run all tests
+cargo clippy                                       # lint (zero warnings required)
+cargo test <test_name>                             # run a single test
+RUST_LOG=shadw=debug cargo run -- start --foreground   # debug the daemon
 ```
 
-## Pull Requests
+## 🔀 Pull requests
 
-1. **Open an issue first** for anything non-trivial — let's align on approach before you write code.
-2. **Keep PRs focused** — one logical change per PR.
-3. **All checks must pass** — `cargo clippy` with zero warnings, `cargo test` with all tests green.
-4. **Include tests** for new CLI commands or behavior changes. Tests live in `tests/cli_test.rs`.
+1. **Open an issue first** for anything non-trivial — let's align before you write code.
+2. **One logical change per PR** — keep it focused.
+3. **`cargo clippy` clean, `cargo test` green** — no exceptions.
+4. **Add tests** for new commands or behavior changes. Tests live in `tests/cli_test.rs`.
 
-## Code Conventions
+## 📐 Code conventions
 
-- Handle errors with `ShadwError` / `Result<T>` — avoid `unwrap()` outside of infallible cases.
-- Use `tracing` (`info!`, `warn!`, `debug!`) for daemon logging, `println!`/`eprintln!` for CLI output.
-- Shared utilities go in `src/util.rs`.
-- Keep the daemon lightweight — it runs in the background for the entire dev session.
+- Errors: `ShadwError` / `Result<T>` — no `unwrap()` outside infallible cases.
+- Logging: `tracing` (`info!`, `warn!`, `debug!`) in the daemon, `println!`/`eprintln!` in CLI output.
+- Utilities: shared helpers go in `src/util.rs`.
+- Keep the daemon light — it runs in the background for entire dev sessions.
 
-## What We're Looking For
+## 🔍 What we're looking for
 
-- New agent sources (beyond Claude Code)
-- New model support
-- Linux/Windows compatibility improvements
-- Bug fixes and edge case handling
+- 🤖 New agent sources (Cursor, Windsurf, Copilot)
+- 🧠 New extraction models
+- 🐧 Linux/Windows compatibility
+- 🐛 Bug fixes and edge cases
 
-## Reporting Issues
+## 🐛 Reporting issues
 
 Open an issue with:
 - What you expected vs what happened
 - Your OS and Rust version (`rustc --version`)
 - Daemon logs if relevant (`cat .shadw/state/daemon.log`)
+
+## 📄 License
+
+By submitting a PR, you agree your contributions are licensed under [MIT](LICENSE).
