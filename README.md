@@ -1,133 +1,131 @@
-# Shadw
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/5660378a-ff15-455e-8c0b-36809861768e" alt="Shadw — Every code change has a story. Shadw captures it." width="100%">
+</p>
 
-**Capture the _why_ behind code changes.**
+<p align="center">
+  <a href="https://github.com/kzkr/shadw/releases"><img src="https://img.shields.io/github/v/release/kzkr/shadw?style=flat-square&color=blue" alt="Release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License"></a>
+</p>
 
-> **Note:** Shadw is under active development. APIs, CLI flags, and the decision record format may change between releases.
+---
 
-When developers work with AI coding assistants, the most valuable part — the reasoning, the alternatives considered, the tradeoffs debated — disappears the moment the conversation ends. The diff shows _what_ changed. Shadw captures _why_.
+A git diff shows what changed. Shadw shows why.
 
-## How it works
+When you work with AI coding agents, the reasoning, alternatives explored, and tradeoffs debated vanish the moment the session ends. Shadw runs locally, watches your conversations and commits, and surfaces a **Decision Trail** on your pull requests.
 
-Shadw runs a lightweight daemon that watches two things:
+> ⚠️ Under active development. CLI flags and the decision record format may change between releases.
 
-1. **Your AI conversations** — reads Claude Code's JSONL session files as they're written
-2. **Your git commits** — detects new commits via ref changes
+## What you get
 
-When a commit lands, Shadw correlates it with the preceding conversation, runs a local LLM to extract a structured decision record, and attaches it as a [git note](https://git-scm.com/docs/git-notes). On push, a GitHub Action renders these into a **Decision Trail** on your pull request:
+On every PR, a collapsible decision trail appears as a comment:
 
 <details>
-<summary><strong><code>a1b2c3d4</code></strong> Chose a shared PropertyCard over duplicating markup per page</summary>
+<summary><strong><code>f4a21c7</code></strong> Switched from REST polling to WebSockets for real-time dashboard updates</summary>
 <br>
 
-@kzkr needed a way to display property listings across both the search results and favorites pages. The conversation explored three options: a shared component, page-specific templates, and a slot-based layout wrapper.
-
-The shared PropertyCard won because both pages render identical data — only the grid layout and empty states differ. Duplicating the markup would mean syncing changes across two files every time the card design evolves. The component accepts a `variant` prop for the minor visual differences between contexts.
+@sarah flagged that the dashboard was hammering the API with 2-second polls across 50+ widgets. We considered SSE but needed bidirectional communication for filters. WebSockets cut server load by 80% and gave us sub-100ms updates. The tradeoff is reconnection logic on flaky networks — solved with exponential backoff and a visible connection status indicator.
 
 </details>
 
-## Key properties
+<details>
+<summary><strong><code>a83ef02</code></strong> Kept Stripe webhooks idempotent instead of adding a job queue for payments</summary>
+<br>
 
-- **Free** — uses a local open-weight model, no API keys or subscriptions
-- **Local-first** — extraction runs entirely on your machine via [llama.cpp](https://github.com/ggerganov/llama.cpp)
-- **Private by default** — your conversations never leave your machine; only curated decision summaries are shared via git notes
-- **Fast** — single Rust binary, no runtime, no Docker, no background services beyond the daemon itself
-- **Zero configuration** — one command to set up, then it works silently in the background
-- **Fits your workflow** — uses native git features (notes, hooks), no new tools to learn
+@james wanted to guarantee no double charges during peak traffic. A job queue (Bull, SQS) would add infrastructure and latency. Instead, we store a unique idempotency key per webhook event and check it before processing. Simpler to debug, no new service to monitor, and Stripe already retries on failure. If we ever need async processing, we can layer it on later without changing the core flow.
+
+</details>
+
+<details>
+<summary><strong><code>d19b4e6</code></strong> Chose row-level security in Postgres over application-level tenant isolation</summary>
+<br>
+
+@priya needed multi-tenant data isolation that couldn't be bypassed by a missed WHERE clause. We debated separate schemas per tenant, but that breaks connection pooling and makes migrations painful at scale. RLS policies on a tenant_id column enforce isolation at the database level — every query is automatically scoped. One less thing the application layer can get wrong.
+
+</details>
+
+Decisions live in [git notes](https://git-scm.com/docs/git-notes) — portable, versioned, zero lock-in.
 
 ## Install
 
 ```bash
 curl -fsSL https://shadw.dev/install.sh | bash
+cd your-project && shadw init
 ```
 
-Prebuilt binaries are available for macOS (Apple Silicon & Intel) and Linux (x86_64).
+That's it. Shadw is now watching. `shadw init` downloads the model, installs hooks, and starts the daemon.
 
 <details>
 <summary>Build from source</summary>
 
 ```bash
 cargo build --release
-# Binary at target/release/shadw
 ```
 
 Requires Rust 1.85+ and cmake.
 
 </details>
 
-## Quick start
+## How it works
 
-```bash
-# Initialize in your project (downloads the model on first run)
-cd your-project
-shadw init
+**1. You code with AI** — a background daemon watches your agent's session files.
 
-# That's it. Shadw is now watching.
-```
+**2. You commit** — a local LLM reads the conversation and extracts key decisions.
 
-`shadw init` will:
+**3. Notes attach** — decision records are written as git notes on `refs/notes/shadw`.
 
-- Create a `.shadw/` directory (gitignored)
-- Download the extraction model (~12 GB, one-time)
-- Install a `pre-push` hook to sync decision notes
-- Add a GitHub Action workflow for PR comments
-- Start the daemon
+**4. PRs get context** — a GitHub Action posts a structured decision trail as a comment.
+
+## Why Shadw
+
+🔒 **Private by design** — conversations never leave your machine. Only curated summaries are shared.
+
+💸 **Zero cost** — open-weight model, no API keys, no subscriptions, no vendor lock-in.
+
+⚡ **Zero friction** — no extra steps, no new habits. You keep coding exactly like before.
+
+🪶 **Lightweight** — single Rust binary. No Docker, no database, no server.
+
+👀 **Better reviews** — reviewers see intent, not just diffs. Less back-and-forth, faster approvals.
 
 ## Commands
 
-| Command              | Description                              |
-| -------------------- | ---------------------------------------- |
-| `shadw init`         | Initialize Shadw in the current git repo |
-| `shadw start`        | Start the background daemon              |
-| `shadw stop`         | Stop the daemon                          |
-| `shadw restart`      | Restart the daemon                       |
-| `shadw status`       | Show daemon, model, and agent status     |
-| `shadw use [model]`  | List or select the extraction model      |
-| `shadw retry <hash>` | Re-extract decisions for a commit        |
-| `shadw upgrade`      | Upgrade to the latest release            |
+```
+shadw init            Initialize in the current git repo
+shadw start           Start the daemon
+shadw stop            Stop the daemon
+shadw restart         Restart the daemon
+shadw status          Show daemon, model, and agent status
+shadw use [model]     List or select the extraction model
+shadw retry <hash>    Re-extract decisions for a commit
+shadw upgrade         Upgrade to the latest release
+```
+
+## Models
+
+| Model               | Params  | Size   | License    |
+| ------------------- | ------- | ------ | ---------- |
+| `gpt-oss` (default) | 20B MoE | ~12 GB | Apache 2.0 |
+
+All inference runs locally via [llama.cpp](https://github.com/ggerganov/llama.cpp). More models coming soon. Switch models with `shadw use <model>`.
+
+## Agents
+
+| Agent                                 | Status    |
+| ------------------------------------- | --------- |
+| [Claude Code](https://claude.ai/code) | Supported |
+| Cursor                                | Planned   |
+| Windsurf                              | Planned   |
+| Copilot                               | Planned   |
 
 ## Requirements
 
-- macOS (Apple Silicon or Intel) or Linux (x86_64)
+- macOS (Apple Silicon & Intel) or Linux (x86_64)
 - Git
-- ~12 GB disk space for the default model
-
-## Supported agents
-
-| Agent | Source |
-|-------|--------|
-| [Claude Code](https://claude.ai/code) | JSONL session files |
-
-More agents coming soon (Cursor, Windsurf, Copilot).
-
-## Extraction models
-
-| Model | Params | Size | License |
-|-------|--------|------|---------|
-| `gpt-oss` (default) | 20B MoE | ~12 GB | Apache 2.0 |
-
-Models run locally via llama.cpp. More models coming soon. Use `shadw use` to list or switch models.
-
-## How decisions reach your PR
-
-```
-Developer + AI conversation
-        ↓
-  Shadw daemon (local)
-        ↓
-  Local LLM extraction
-        ↓
-  git notes --ref shadw
-        ↓
-  git push (via pre-push hook)
-        ↓
-  GitHub Action reads notes
-        ↓
-  PR comment: Decision Trail
-```
+- ~12 GB disk for the default model
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
