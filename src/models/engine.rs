@@ -19,6 +19,7 @@ pub fn infer(
     user: &str,
     prefix: &str,
     max_tokens: u32,
+    n_ctx: u32,
 ) -> Result<String, String> {
     let spinner = ProgressBar::new_spinner();
     spinner.set_style(
@@ -39,7 +40,6 @@ pub fn infer(
     let model = LlamaModel::load_from_file(&backend, model_path, &model_params)
         .map_err(|e| format!("failed to load model: {e}"))?;
 
-    let n_ctx: u32 = 16384;
     let n_batch: u32 = 2048;
     let ctx_params = LlamaContextParams::default()
         .with_n_ctx(std::num::NonZeroU32::new(n_ctx))
