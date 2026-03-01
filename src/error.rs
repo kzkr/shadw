@@ -14,6 +14,12 @@ pub enum ShadwError {
     #[error("Shadw is already running (PID {0})")]
     DaemonAlreadyRunning(u32),
 
+    #[error("project not found in registry: {0}")]
+    ProjectNotFound(String),
+
+    #[error("project directory no longer exists: {0}\nRun `shadw rm <id>` to remove it from the registry.")]
+    ProjectDirMissing(PathBuf),
+
     #[error("{0}")]
     Io(#[from] std::io::Error),
 

@@ -1,8 +1,8 @@
 [package]
 name = "shadw"
-version = "0.1.4"
+version = "0.2.0"
 edition = "2021"
-description = "Capture the why behind code changes"
+description = "Every code change has a story. Shadw captures it."
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
