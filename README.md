@@ -106,11 +106,15 @@ shadw upgrade          Upgrade to the latest release
 
 ## Models
 
-| Model               | Params  | Size   | License    |
-| ------------------- | ------- | ------ | ---------- |
-| `gpt-oss` (default) | 20B MoE | ~12 GB | Apache 2.0 |
+| Model               | Params  | Size    | License    |
+| ------------------- | ------- | ------- | ---------- |
+| `qwen3-4b`          | 4B      | ~2.5 GB | Apache 2.0 |
+| `gpt-oss` (default) | 20B MoE | ~12 GB  | Apache 2.0 |
+| `qwen3-32b`         | 32B     | ~20 GB  | Apache 2.0 |
 
-All inference runs locally via [llama.cpp](https://github.com/ggerganov/llama.cpp). More models coming soon. Switch models with `shadw use <model>`.
+Larger models produce richer, more nuanced decision summaries. Use `qwen3-4b` when disk space or RAM is limited; use `qwen3-32b` for the best extraction quality.
+
+All inference runs locally via [llama.cpp](https://github.com/ggerganov/llama.cpp). Switch models with `shadw use <model>`.
 
 ## Agents
 

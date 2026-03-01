@@ -10,16 +10,38 @@ pub struct ModelSpec {
     pub n_ctx: u32,
 }
 
-static MODELS: &[ModelSpec] = &[ModelSpec {
-    name: "gpt-oss",
-    tagline: "OpenAI's open-weight model for reasoning, agentic tasks, and developer use cases.",
-    hf_repo: "ggml-org/gpt-oss-20b-GGUF",
-    hf_file: "gpt-oss-20b-mxfp4.gguf",
-    size_bytes: 12_109_568_423,
-    params: "20B MoE",
-    license: "Apache 2.0",
-    n_ctx: 16384,
-}];
+static MODELS: &[ModelSpec] = &[
+    ModelSpec {
+        name: "gpt-oss",
+        tagline: "OpenAI's open-weight model for reasoning, agentic tasks, and developer use cases.",
+        hf_repo: "ggml-org/gpt-oss-20b-GGUF",
+        hf_file: "gpt-oss-20b-mxfp4.gguf",
+        size_bytes: 12_109_568_423,
+        params: "20B MoE",
+        license: "Apache 2.0",
+        n_ctx: 16384,
+    },
+    ModelSpec {
+        name: "qwen3-4b",
+        tagline: "Alibaba's compact model. Fast, great at structured output, 5x smaller than gpt-oss.",
+        hf_repo: "ggml-org/Qwen3-4B-GGUF",
+        hf_file: "Qwen3-4B-Q4_K_M.gguf",
+        size_bytes: 2_497_280_640,
+        params: "4B",
+        license: "Apache 2.0",
+        n_ctx: 16384,
+    },
+    ModelSpec {
+        name: "qwen3-32b",
+        tagline: "Alibaba's flagship open model. Best quality for decision extraction, 1.6x larger than gpt-oss.",
+        hf_repo: "ggml-org/Qwen3-32B-GGUF",
+        hf_file: "Qwen3-32B-Q4_K_M.gguf",
+        size_bytes: 19_762_149_152,
+        params: "32B",
+        license: "Apache 2.0",
+        n_ctx: 16384,
+    },
+];
 
 pub fn list_models() -> &'static [ModelSpec] {
     MODELS
