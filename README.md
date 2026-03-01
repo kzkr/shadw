@@ -1,5 +1,5 @@
 <p align="center">
-  <img height="100" src="https://github.com/user-attachments/assets/fd700b55-6f5c-4c42-b77d-80cde0fb3f8d" alt="Shadw — Every code change has a story. Shadw captures it."/>
+  <img height="100" src="https://shadw.dev/github-icon.png" alt="Shadw — Every code change has a story. Shadw captures it."/>
 </p>
 
 <h1 align="center">Shadw</h1>
@@ -92,14 +92,16 @@ Requires Rust 1.85+ and cmake.
 ## Commands
 
 ```
-shadw init            Initialize in the current git repo
-shadw start           Start the daemon
-shadw stop            Stop the daemon
-shadw restart         Restart the daemon
-shadw status          Show daemon, model, and agent status
-shadw use [model]     List or select the extraction model
-shadw retry <hash>    Re-extract decisions for a commit
-shadw upgrade         Upgrade to the latest release
+shadw init             Initialize in the current git repo
+shadw ls               List all projects and daemon status
+shadw start [target]   Start daemon(s) — ID, path, or "all"
+shadw stop [target]    Stop daemon(s) — ID, path, or "all"
+shadw restart [target] Restart daemon(s)
+shadw rm <target>      Unregister a project
+shadw status           Show daemon, model, and agent status
+shadw use [model]      List or select the extraction model
+shadw retry <hash>     Re-extract decisions for a commit
+shadw upgrade          Upgrade to the latest release
 ```
 
 ## Models

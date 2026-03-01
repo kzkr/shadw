@@ -64,6 +64,11 @@ pub fn exec() -> Result<()> {
 
     println!("Initialized Shadw in {}/.shadw/", repo_root.display());
 
+    // Register in global daemon registry (non-fatal)
+    if let Err(e) = crate::daemon::registry::register(&repo_root) {
+        eprintln!("warning: could not register in global registry: {e}");
+    }
+
     if interactive {
         // Download the model
         let spec = models::get_model(&model_name).ok_or_else(|| {
@@ -73,7 +78,7 @@ pub fn exec() -> Result<()> {
 
         // Start watching
         println!();
-        super::start::exec(false)?;
+        super::start::exec(false, None)?;
         println!("\nRun `shadw --help` for available commands.");
     }
 
