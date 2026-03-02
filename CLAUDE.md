@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What is Shadw
 
-CLI tool that captures the *why* behind code changes. It runs a background daemon that observes AI-developer conversations (Claude Code JSONL files), correlates them with git commits, extracts structured decision records using a local LLM, and attaches them as git notes. A GitHub Action then surfaces these decisions as PR comments.
+CLI tool that captures the *why* behind code changes. It runs a background daemon that observes AI-developer conversations (Claude Code, Cursor), correlates them with git commits, extracts structured decision records using a local LLM, and attaches them as git notes. A GitHub Action then surfaces these decisions as PR comments.
 
 Key properties: free, local-first, private by default. Conversations never leave the machine — only extracted decision summaries are shared via git notes.
 
@@ -25,10 +25,10 @@ Pin `time` crate to 0.3.36 if you hit Rust 1.85 stable compatibility issues.
 
 The system has three runtime modes that share the same binary:
 
-**CLI commands** (`src/cli/`) — user-facing entry points. `main.rs` dispatches via clap subcommands: `init`, `ls`, `start`, `stop`, `restart`, `rm`, `status`, `use`, `retry`, `upgrade`.
+**CLI commands** (`src/cli/`) — user-facing entry points. `main.rs` dispatches via clap subcommands: `init`, `ls`, `start`, `stop`, `restart`, `rm`, `status`, `model`, `agent`, `retry`, `upgrade`.
 
 **Background daemon** (`src/daemon/server.rs`) — started by `shadw start`, runs a tokio event loop watching two filesystem paths via `notify`:
-1. Claude Code's JSONL project dir (`~/.claude/projects/<encoded-path>/`) — new conversation entries are buffered in `ConversationWatcher`
+1. Agent conversation dir (via `AgentWatcher` trait) — new conversation entries are buffered by the agent-specific watcher (`watcher/conversation.rs` for Claude Code, `watcher/cursor.rs` for Cursor)
 2. `.git/refs/heads/` — ref changes detected by `GitWatcher`, which triggers `capture_context()`
 
 On commit detection: drain conversation buffer → save context JSON → spawn async extraction task.
@@ -45,9 +45,9 @@ On commit detection: drain conversation buffer → save context JSON → spawn a
 ## Data Flow
 
 ```
-Claude JSONL → ConversationWatcher (buffer) → capture_context() → context JSON
+Agent sessions → AgentWatcher (buffer) → capture_context() → context JSON
      +
-git refs/heads change → GitWatcher → CommitInfo ─────────────────────┘
+git refs/heads change → GitWatcher → CommitInfo ──────────────────────┘
                                                                       ↓
                                                         extract_and_save()
                                                               ↓

@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 
 use tracing::{debug, warn};
 
-use super::ConversationEntry;
+use super::{AgentWatcher, ConversationEntry};
 use crate::error::Result;
 use crate::util::truncate;
 
@@ -22,34 +22,6 @@ impl ConversationWatcher {
             cursors,
             buffer: Vec::new(),
         }
-    }
-
-    /// Scan all JSONL files and advance cursors to current end-of-file.
-    /// Called on startup so we only capture new entries going forward.
-    pub fn scan(&mut self) -> Result<()> {
-        if !self.project_dir.exists() {
-            return Ok(());
-        }
-        for entry in fs::read_dir(&self.project_dir)?.flatten() {
-            let path = entry.path();
-            if path.extension().and_then(|e| e.to_str()) == Some("jsonl") {
-                if let std::collections::hash_map::Entry::Vacant(e) = self.cursors.entry(path) {
-                    // First time seeing this file — start from end
-                    if let Ok(meta) = fs::metadata(e.key()) {
-                        e.insert(meta.len());
-                    }
-                }
-            }
-        }
-        Ok(())
-    }
-
-    /// Read new lines from a specific file that changed.
-    pub fn read_file(&mut self, path: &Path) -> Result<()> {
-        if path.extension().and_then(|e| e.to_str()) != Some("jsonl") {
-            return Ok(());
-        }
-        self.read_new_lines(path)
     }
 
     fn read_new_lines(&mut self, path: &Path) -> Result<()> {
@@ -105,20 +77,63 @@ impl ConversationWatcher {
         self.cursors.insert(path.to_path_buf(), new_cursor);
         Ok(())
     }
+}
 
-    /// Drain ALL buffered entries.
-    pub fn drain_all(&mut self) -> Vec<ConversationEntry> {
+impl AgentWatcher for ConversationWatcher {
+    fn scan(&mut self) -> Result<()> {
+        if !self.project_dir.exists() {
+            return Ok(());
+        }
+        for entry in fs::read_dir(&self.project_dir)?.flatten() {
+            let path = entry.path();
+            if path.extension().and_then(|e| e.to_str()) == Some("jsonl") {
+                if let std::collections::hash_map::Entry::Vacant(e) = self.cursors.entry(path) {
+                    if let Ok(meta) = fs::metadata(e.key()) {
+                        e.insert(meta.len());
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn on_file_changed(&mut self, path: &Path) -> Result<()> {
+        if path.extension().and_then(|e| e.to_str()) != Some("jsonl") {
+            return Ok(());
+        }
+        self.read_new_lines(path)
+    }
+
+    fn drain_all(&mut self) -> Vec<ConversationEntry> {
         std::mem::take(&mut self.buffer)
     }
 
-    pub fn buffer_len(&self) -> usize {
+    fn buffer_len(&self) -> usize {
         self.buffer.len()
     }
 
-    pub fn cursors(&self) -> &HashMap<PathBuf, u64> {
-        &self.cursors
+    fn watch_dir(&self) -> &Path {
+        &self.project_dir
     }
 
+    fn handles_path(&self, path: &Path) -> bool {
+        path.extension().and_then(|e| e.to_str()) == Some("jsonl")
+    }
+
+    fn save_state(&self, state_dir: &Path) {
+        let path = state_dir.join("cursor.json");
+        if let Ok(json) = serde_json::to_string_pretty(&self.cursors) {
+            let _ = std::fs::write(path, json);
+        }
+    }
+}
+
+/// Load cursor positions from a JSON file.
+pub fn load_cursors(path: &Path) -> HashMap<PathBuf, u64> {
+    std::fs::read_to_string(path)
+        .ok()
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .unwrap_or_default()
 }
 
 fn parse_entry(value: &serde_json::Value) -> Option<ConversationEntry> {
@@ -205,4 +220,3 @@ fn extract_content_preview(message: &serde_json::Value) -> String {
     }
     String::new()
 }
-

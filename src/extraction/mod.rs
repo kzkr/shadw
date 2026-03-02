@@ -140,10 +140,17 @@ async fn extract(
     config: &ExtractionConfig,
 ) -> Result<DecisionRecord, String> {
     // Skip the LLM if there's no conversation that actually relates to this commit.
-    // The watcher buffer may contain entries from unrelated Claude Code sessions
+    // For Claude Code, the watcher buffer may contain entries from unrelated sessions
     // (e.g., the developer is chatting about project A while committing in project B).
     // We check whether any conversation entry mentions at least one changed file.
-    if !has_relevant_conversation(&context.conversation, &context.commit.changed_files) {
+    //
+    // For workspace-scoped agents like Cursor, conversations are already filtered by
+    // project, and users describe intent at a high level without mentioning exact
+    // filenames — so the file correlation filter would incorrectly reject valid entries.
+    let skip_file_filter = context.agent == "cursor";
+    if !skip_file_filter
+        && !has_relevant_conversation(&context.conversation, &context.commit.changed_files)
+    {
         info!("no relevant conversation for this commit, skipping extraction");
         return Ok(DecisionRecord {
             commit_hash: context.commit.hash.clone(),
@@ -160,7 +167,7 @@ async fn extract(
     // Look up model spec to derive context budget
     let spec = crate::models::get_model(&config.model).ok_or_else(|| {
         format!(
-            "unknown model '{}'. Run `shadw use` to see available models.",
+            "unknown model '{}'. Run `shadw model` to see available models.",
             config.model
         )
     })?;
@@ -383,7 +390,7 @@ async fn call_llm(prompt: &str, system_prompt: &str, config: &ExtractionConfig, 
 
     let spec = models::get_model(&config.model).ok_or_else(|| {
         format!(
-            "unknown model '{}'. Run `shadw use` to see available models.",
+            "unknown model '{}'. Run `shadw model` to see available models.",
             config.model
         )
     })?;

@@ -2,7 +2,7 @@ use crate::config::{self, ShadwConfig};
 use crate::error::{Result, ShadwError};
 use crate::models;
 
-/// `shadw use [model]` — list available models or select one.
+/// `shadw model [model]` — list available models or select one.
 pub fn exec(model_name: Option<&str>) -> Result<()> {
     match model_name {
         None => list(),
@@ -34,14 +34,14 @@ fn list() -> Result<()> {
         }
     }
 
-    println!("\nUsage: shadw use <model>");
+    println!("\nUsage: shadw model <model>");
     Ok(())
 }
 
 fn select(name: &str) -> Result<()> {
     let spec = models::get_model(name).ok_or_else(|| {
         ShadwError::Other(format!(
-            "unknown model '{name}'. Run `shadw use` to see available models."
+            "unknown model '{name}'. Run `shadw model` to see available models."
         ))
     })?;
 

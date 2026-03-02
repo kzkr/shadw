@@ -99,7 +99,8 @@ shadw stop [target]    Stop daemon(s) — ID, path, or "all"
 shadw restart [target] Restart daemon(s)
 shadw rm <target>      Unregister a project
 shadw status           Show daemon, model, and agent status
-shadw use [model]      List or select the extraction model
+shadw model [model]    List or select the extraction model
+shadw agent [agent]    List or select the AI agent to watch
 shadw retry <hash>     Re-extract decisions for a commit
 shadw upgrade          Upgrade to the latest release
 ```
@@ -114,16 +115,18 @@ shadw upgrade          Upgrade to the latest release
 
 Larger models produce richer, more nuanced decision summaries. Use `qwen3-4b` when disk space or RAM is limited; use `qwen3-32b` for the best extraction quality.
 
-All inference runs locally via [llama.cpp](https://github.com/ggerganov/llama.cpp). Switch models with `shadw use <model>`.
+All inference runs locally via [llama.cpp](https://github.com/ggerganov/llama.cpp). Switch models with `shadw model <model>`.
 
 ## Agents
 
 | Agent                                 | Status    |
 | ------------------------------------- | --------- |
 | [Claude Code](https://claude.ai/code) | Supported |
-| Cursor                                | Planned   |
+| Cursor                                | Supported |
 | Windsurf                              | Planned   |
 | Copilot                               | Planned   |
+
+Switch agents with `shadw agent <name>`. Switch models with `shadw model <model>`.
 
 ## Contributing
 

@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use notify::{Config, RecursiveMode, Watcher};
@@ -10,9 +9,8 @@ use crate::config::{self, ExtractionConfig, ShadwConfig};
 use crate::daemon::process;
 use crate::error::{Result, ShadwError};
 use crate::extraction;
-use crate::watcher::conversation::ConversationWatcher;
 use crate::watcher::git::GitWatcher;
-use crate::watcher::CapturedContext;
+use crate::watcher::{AgentWatcher, CapturedContext};
 
 pub async fn run(repo_root: &Path) -> Result<()> {
     info!("daemon started, watching {}", repo_root.display());
@@ -30,13 +28,13 @@ pub async fn run(repo_root: &Path) -> Result<()> {
     let mut sigint = signal(SignalKind::interrupt())
         .map_err(|e| ShadwError::Other(format!("failed to register SIGINT handler: {e}")))?;
 
-    // Conversation watcher
-    let claude_dir = config::claude_code_project_dir(repo_root);
-    let cursor_path = config::state_dir(repo_root).join("cursor.json");
-    let cursors = load_cursors(&cursor_path);
-    let mut conv_watcher = ConversationWatcher::new(claude_dir.clone(), cursors);
+    // Create agent-specific conversation watcher
+    let state_dir = config::state_dir(repo_root);
+    let agent_name = &shadw_config.agent;
+    let mut conv_watcher = crate::watcher::create_watcher(agent_name, repo_root, &state_dir)?;
     conv_watcher.scan()?;
-    info!("conversations: {}", claude_dir.display());
+    let watch_dir = conv_watcher.watch_dir().to_path_buf();
+    info!("agent: {} — watching {}", agent_name, watch_dir.display());
 
     // Git watcher
     let mut git_watcher = GitWatcher::new(repo_root.to_path_buf())?;
@@ -55,18 +53,30 @@ pub async fn run(repo_root: &Path) -> Result<()> {
     )
     .map_err(|e| ShadwError::Other(format!("failed to create fs watcher: {e}")))?;
 
-    let mut watching_claude_dir = false;
-    if claude_dir.exists() {
+    let mut watching_agent_dir = false;
+    if watch_dir.exists() {
         fs_watcher
-            .watch(&claude_dir, RecursiveMode::NonRecursive)
-            .map_err(|e| ShadwError::Other(format!("failed to watch conversation dir: {e}")))?;
-        watching_claude_dir = true;
+            .watch(&watch_dir, RecursiveMode::NonRecursive)
+            .map_err(|e| ShadwError::Other(format!("failed to watch agent dir: {e}")))?;
+        watching_agent_dir = true;
     } else {
         warn!(
-            "Claude Code project dir not found: {}",
-            claude_dir.display()
+            "agent dir not found: {}",
+            watch_dir.display()
         );
         warn!("will poll until it appears");
+    }
+
+    // Watch extra dir if the agent needs it (e.g. Cursor's global storage)
+    if let Some(extra_dir) = conv_watcher.extra_watch_dir() {
+        if extra_dir.exists() {
+            fs_watcher
+                .watch(extra_dir, RecursiveMode::NonRecursive)
+                .map_err(|e| {
+                    ShadwError::Other(format!("failed to watch extra agent dir: {e}"))
+                })?;
+            info!("also watching: {}", extra_dir.display());
+        }
     }
 
     if refs_dir.exists() {
@@ -78,8 +88,9 @@ pub async fn run(repo_root: &Path) -> Result<()> {
     let paths = DaemonPaths {
         refs_dir,
         contexts_dir: config::shadw_dir(repo_root).join("contexts"),
-        cursor_path,
+        state_dir,
         repo_root: repo_root.to_path_buf(),
+        agent: agent_name.to_string(),
     };
     info!("daemon ready");
 
@@ -91,22 +102,22 @@ pub async fn run(repo_root: &Path) -> Result<()> {
             Some(event) = rx.recv() => {
                 handle_event(
                     &event,
-                    &mut conv_watcher,
+                    conv_watcher.as_mut(),
                     &mut git_watcher,
                     &paths,
                     &extraction_config,
                 );
             }
-            _ = poll_interval.tick(), if !watching_claude_dir => {
-                if claude_dir.exists() {
-                    match fs_watcher.watch(&claude_dir, RecursiveMode::NonRecursive) {
+            _ = poll_interval.tick(), if !watching_agent_dir => {
+                if watch_dir.exists() {
+                    match fs_watcher.watch(&watch_dir, RecursiveMode::NonRecursive) {
                         Ok(()) => {
-                            info!("Claude Code project dir appeared, now watching: {}", claude_dir.display());
+                            info!("agent dir appeared, now watching: {}", watch_dir.display());
                             conv_watcher.scan().ok();
-                            watching_claude_dir = true;
+                            watching_agent_dir = true;
                         }
                         Err(e) => {
-                            warn!("failed to watch conversation dir: {e}");
+                            warn!("failed to watch agent dir: {e}");
                         }
                     }
                 }
@@ -122,7 +133,7 @@ pub async fn run(repo_root: &Path) -> Result<()> {
         }
     }
 
-    save_cursors(&paths.cursor_path, conv_watcher.cursors());
+    conv_watcher.save_state(&paths.state_dir);
     let _ = process::remove_pid(repo_root);
 
     info!("daemon stopped");
@@ -132,25 +143,27 @@ pub async fn run(repo_root: &Path) -> Result<()> {
 struct DaemonPaths {
     refs_dir: PathBuf,
     contexts_dir: PathBuf,
-    cursor_path: PathBuf,
+    state_dir: PathBuf,
     repo_root: PathBuf,
+    agent: String,
 }
 
 fn handle_event(
     event: &notify::Event,
-    conv_watcher: &mut ConversationWatcher,
+    conv_watcher: &mut dyn AgentWatcher,
     git_watcher: &mut GitWatcher,
     paths: &DaemonPaths,
     extraction_config: &ExtractionConfig,
 ) {
     for path in &event.paths {
+        debug!("fs event: {:?} {}", event.kind, path.display());
         if path.starts_with(&paths.refs_dir) {
             if let Some(commit) = git_watcher.check_ref_change(path) {
                 capture_context(commit, conv_watcher, paths, extraction_config);
             }
-        } else if path.extension().and_then(|e| e.to_str()) == Some("jsonl") {
-            if let Err(e) = conv_watcher.read_file(path) {
-                warn!("failed to read conversation file: {e}");
+        } else if conv_watcher.handles_path(path) {
+            if let Err(e) = conv_watcher.on_file_changed(path) {
+                warn!("failed to read agent file: {e}");
             } else {
                 debug!("buffered entries: {}", conv_watcher.buffer_len());
             }
@@ -160,16 +173,22 @@ fn handle_event(
 
 fn capture_context(
     commit: crate::watcher::CommitInfo,
-    conv_watcher: &mut ConversationWatcher,
+    conv_watcher: &mut dyn AgentWatcher,
     paths: &DaemonPaths,
     extraction_config: &ExtractionConfig,
 ) {
+    // Re-read latest state before draining (important for SQLite-based watchers
+    // where WAL writes may not reliably trigger filesystem events).
+    if let Err(e) = conv_watcher.refresh() {
+        warn!("failed to refresh conversation state: {e}");
+    }
+
     let entries = conv_watcher.drain_all();
 
     // No conversation since last commit — nothing to extract
     if entries.is_empty() {
         info!("no conversation entries for {}, skipping", &commit.hash[..8.min(commit.hash.len())]);
-        save_cursors(&paths.cursor_path, conv_watcher.cursors());
+        conv_watcher.save_state(&paths.state_dir);
         return;
     }
 
@@ -179,6 +198,7 @@ fn capture_context(
         captured_at: chrono::Utc::now().to_rfc3339(),
         commit,
         conversation: entries,
+        agent: paths.agent.clone(),
     };
 
     // Save raw context (gitignored)
@@ -211,7 +231,7 @@ fn capture_context(
         }
     }
 
-    save_cursors(&paths.cursor_path, conv_watcher.cursors());
+    conv_watcher.save_state(&paths.state_dir);
 
     // Spawn async extraction → write git note → push notes → cleanup context
     let contexts_dir = paths.contexts_dir.clone();
@@ -223,17 +243,4 @@ fn capture_context(
         repo_root,
         config,
     ));
-}
-
-fn load_cursors(path: &Path) -> HashMap<PathBuf, u64> {
-    std::fs::read_to_string(path)
-        .ok()
-        .and_then(|s| serde_json::from_str(&s).ok())
-        .unwrap_or_default()
-}
-
-fn save_cursors(path: &Path, cursors: &HashMap<PathBuf, u64>) {
-    if let Ok(json) = serde_json::to_string_pretty(cursors) {
-        let _ = std::fs::write(path, json);
-    }
 }

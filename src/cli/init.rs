@@ -185,7 +185,7 @@ fn pick_model() -> Result<String> {
     }
 
     Err(ShadwError::Other(format!(
-        "unknown model '{input}'. Run `shadw use` to see available models."
+        "unknown model '{input}'. Run `shadw model` to see available models."
     )))
 }
 
