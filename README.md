@@ -126,7 +126,7 @@ All inference runs locally via [llama.cpp](https://github.com/ggerganov/llama.cp
 | Windsurf                              | Planned   |
 | Copilot                               | Planned   |
 
-Switch agents with `shadw agent <name>`. Switch models with `shadw model <model>`.
+Switch agents with `shadw agent <name>`.
 
 ## Contributing
 
