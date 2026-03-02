@@ -1,5 +1,7 @@
+pub mod agent;
 pub mod init;
 pub mod ls;
+pub mod model;
 pub mod restart;
 pub mod retry;
 pub mod rm;
@@ -7,4 +9,3 @@ pub mod start;
 pub mod status;
 pub mod stop;
 pub mod upgrade;
-pub mod use_model;

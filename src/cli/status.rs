@@ -20,8 +20,8 @@ pub fn exec() -> Result<()> {
     }
 
     // Model + install status on the same line
-    let config = config::ShadwConfig::load(&repo_root).unwrap_or_default();
-    let model_status = if let Some(spec) = crate::models::get_model(&config.model) {
+    let cfg = config::ShadwConfig::load(&repo_root).unwrap_or_default();
+    let model_status = if let Some(spec) = crate::models::get_model(&cfg.model) {
         let path = crate::models::download::model_path(spec);
         if path.exists() {
             "\x1b[32minstalled\x1b[0m"
@@ -31,16 +31,33 @@ pub fn exec() -> Result<()> {
     } else {
         "\x1b[31munknown\x1b[0m"
     };
-    println!("Model:   {} ({})", config.model, model_status);
+    println!("Model:   {} ({})", cfg.model, model_status);
 
-    // Agent source
-    let claude_dir = config::claude_code_project_dir(&repo_root);
-    let source_status = if claude_dir.exists() {
-        "\x1b[32mfound\x1b[0m"
-    } else {
-        "\x1b[31mnot found\x1b[0m"
+    // Agent source — detection depends on which agent is configured
+    let source_status = match cfg.agent.as_str() {
+        "claude-code" => {
+            let claude_dir = config::claude_code_project_dir(&repo_root);
+            if claude_dir.exists() {
+                "\x1b[32mfound\x1b[0m"
+            } else {
+                "\x1b[31mnot found\x1b[0m"
+            }
+        }
+        "cursor" => {
+            let state_dir = config::state_dir(&repo_root);
+            let watcher = crate::watcher::cursor::CursorWatcher::new(
+                repo_root.to_path_buf(),
+                &state_dir,
+            );
+            if watcher.has_workspace() {
+                "\x1b[32mfound\x1b[0m"
+            } else {
+                "\x1b[31mnot found\x1b[0m"
+            }
+        }
+        _ => "\x1b[31munknown agent\x1b[0m",
     };
-    println!("Agent:   {} ({})", config.agent, source_status);
+    println!("Agent:   {} ({})", cfg.agent, source_status);
 
     Ok(())
 }

@@ -46,9 +46,14 @@ enum Commands {
         target: String,
     },
     /// Select or list available models
-    Use {
+    Model {
         /// Model name (omit to list available models)
         model: Option<String>,
+    },
+    /// Select or list AI agents to watch
+    Agent {
+        /// Agent name (omit to list available agents)
+        name: Option<String>,
     },
     /// Show project status
     Status,
@@ -73,7 +78,8 @@ fn main() {
         Commands::Stop { target } => cli::stop::exec(target.as_deref()),
         Commands::Restart { target } => cli::restart::exec(target.as_deref()),
         Commands::Rm { target } => cli::rm::exec(&target),
-        Commands::Use { model } => cli::use_model::exec(model.as_deref()),
+        Commands::Model { model } => cli::model::exec(model.as_deref()),
+        Commands::Agent { name } => cli::agent::exec(name.as_deref()),
         Commands::Status => cli::status::exec(),
         Commands::Retry { hash } => cli::retry::exec(&hash),
         Commands::Upgrade => cli::upgrade::exec(),
