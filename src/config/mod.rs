@@ -65,10 +65,16 @@ pub struct AgentSpec {
     pub name: &'static str,
 }
 
-static AGENTS: &[AgentSpec] = &[AgentSpec {
-    id: "claude-code",
-    name: "Claude Code",
-}];
+static AGENTS: &[AgentSpec] = &[
+    AgentSpec {
+        id: "claude-code",
+        name: "Claude Code",
+    },
+    AgentSpec {
+        id: "cursor",
+        name: "Cursor",
+    },
+];
 
 pub fn list_agents() -> &'static [AgentSpec] {
     AGENTS
