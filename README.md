@@ -122,7 +122,7 @@ All inference runs locally via [llama.cpp](https://github.com/ggerganov/llama.cp
 | Agent                                 | Status    |
 | ------------------------------------- | --------- |
 | [Claude Code](https://claude.ai/code) | Supported |
-| Cursor                                | Supported |
+| [Cursor](https://cursor.com/)         | Supported |
 | Windsurf                              | Planned   |
 | Copilot                               | Planned   |
 
