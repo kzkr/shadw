@@ -340,6 +340,23 @@ fn status_after_init() {
         );
 }
 
+#[test]
+fn status_shows_agent() {
+    let dir = make_git_repo();
+    shadw()
+        .arg("init")
+        .current_dir(dir.path())
+        .assert()
+        .success();
+
+    shadw()
+        .arg("status")
+        .current_dir(dir.path())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("claude-code"));
+}
+
 // --- shadw retry ---
 
 #[test]
@@ -372,23 +389,76 @@ fn retry_no_context_found() {
         ));
 }
 
-// --- shadw use ---
+// --- shadw model (formerly shadw use) ---
 
 #[test]
-fn use_lists_models() {
-    // `shadw use` works without init — it lists available models
+fn model_lists_models() {
+    // `shadw model` works without init — it lists available models
     shadw()
-        .arg("use")
+        .arg("model")
         .assert()
         .success()
         .stdout(predicate::str::contains("gpt-oss"));
 }
 
 #[test]
-fn use_unknown_model_fails() {
+fn model_unknown_fails() {
     shadw()
-        .args(["use", "bogus-model-that-does-not-exist"])
+        .args(["model", "bogus-model-that-does-not-exist"])
         .assert()
         .failure()
         .stderr(predicate::str::contains("unknown model"));
+}
+
+// --- shadw agent ---
+
+#[test]
+fn agent_lists_agents() {
+    // `shadw agent` lists both claude-code and cursor
+    shadw()
+        .arg("agent")
+        .assert()
+        .success()
+        .stdout(
+            predicate::str::contains("claude-code")
+                .and(predicate::str::contains("cursor")),
+        );
+}
+
+#[test]
+fn agent_unknown_fails() {
+    let dir = make_git_repo();
+    shadw()
+        .arg("init")
+        .current_dir(dir.path())
+        .assert()
+        .success();
+
+    shadw()
+        .args(["agent", "bogus"])
+        .current_dir(dir.path())
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("unknown agent"));
+}
+
+#[test]
+fn agent_switch_updates_config() {
+    let dir = make_git_repo();
+    shadw()
+        .arg("init")
+        .current_dir(dir.path())
+        .assert()
+        .success();
+
+    shadw()
+        .args(["agent", "cursor"])
+        .current_dir(dir.path())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("agent = cursor"));
+
+    // Verify config was updated
+    let config = fs::read_to_string(dir.path().join(".shadw/config.toml")).unwrap();
+    assert!(config.contains("agent = \"cursor\""));
 }
